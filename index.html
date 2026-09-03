@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小一數學：20以內加法每日挑戰</title>
+  <style>
+    :root {
+      --primary-color: #4A90E2;
+      --secondary-color: #FF9F43;
+      --success-color: #2ECC71;
+      --danger-color: #EE5253;
+      --bg-color: #F0F3F6;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "MicroSoft YaHei", "Chalkboard SE", sans-serif;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 12px;
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .game-card {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background-color: #E0E0E0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      background-color: var(--secondary-color);
+      transition: width 1s linear;
+    }
+
+    .question-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #2C3E50;
+      margin: 20px 0;
+      min-height: 60px;
+    }
+
+    .blank-box {
+      width: 65px;
+      height: 60px;
+      border: 3px dashed var(--primary-color);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #EBF5FB;
+      color: var(--primary-color);
+    }
+
+    /* 虛擬數字鍵盤 (適合流動裝置) */
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn-num {
+      background: #F8F9FA;
+      border: 2px solid #E9ECEF;
+      border-radius: 12px;
+      padding: 15px 0;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #CED4DA;
+      transition: all 0.1s;
+    }
+
+    .btn-num:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+    .btn-action {
+      grid-column: span 1;
+      background-color: var(--danger-color);
+      color: white;
+      border-color: #D63031;
+      box-shadow: 0 4px 0 #B22222;
+    }
+
+    .btn-submit {
+      grid-column: span 2;
+      background-color: var(--success-color);
+      color: white;
+      border-color: #27AE60;
+      box-shadow: 0 4px 0 #1E8449;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #2980B9;
+      margin-top: 20px;
+    }
+
+    /* 每局總結視窗 Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-content {
+      /* 設定背景圖片 happy.png */
+      background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('happy.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      
+      width: 100%;
+      max-width: 400px;
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title { font-size: 2rem; color: #2C3E50; margin-bottom: 10px; }
+    .modal-score { font-size: 1.6rem; color: var(--primary-color); margin: 15px 0; font-weight: bold; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="game-card">
+    <div id="start-screen" style="text-align: center;">
+      <h1 style="color: var(--primary-color);">加法小勇士 🧮</h1>
+      <p style="font-size: 1.2rem; color: #666;">適合小一學生 · 20以內加法</p>
+      <p style="text-align: left; background: #EBF5FB; padding: 15px; border-radius: 10px; font-size: 0.95rem;">
+        📌 <strong>規則說明：</strong><br>
+        • 每局共有 10 條題目<br>
+        • 每題限時 10 秒鐘<br>
+        • 答對加 1 分，答錯或超時不扣分
+      </p>
+      <button class="start-btn" onclick="startGame()">開始挑戰！</button>
+    </div>
+
+    <div id="game-screen" class="hidden" style="width: 100%;">
+      <div class="header">
+        <span>第 <span id="q-num">1</span> / 10 題</span>
+        <span style="color: var(--danger-color);">⏱️ <span id="timer-text">10</span>s</span>
+      </div>
+      
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+
+      <div class="question-box" id="question-display">
+        </div>
+
+      <div class="numpad">
+        <button class="btn-num" onclick="inputNum(1)">1</button>
+        <button class="btn-num" onclick="inputNum(2)">2</button>
+        <button class="btn-num" onclick="inputNum(3)">3</button>
+        <button class="btn-num" onclick="inputNum(4)">4</button>
+        <button class="btn-num" onclick="inputNum(5)">5</button>
+        <button class="btn-num" onclick="inputNum(6)">6</button>
+        <button class="btn-num" onclick="inputNum(7)">7</button>
+        <button class="btn-num" onclick="inputNum(8)">8</button>
+        <button class="btn-num" onclick="inputNum(9)">9</button>
+        <button class="btn-num btn-action" onclick="clearInput()">清除</button>
+        <button class="btn-num" onclick="inputNum(0)">0</button>
+        <button class="btn-num btn-submit" onclick="submitAnswer()">確認 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="result-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title">🎉 挑戰完成！</div>
+      <div class="modal-score">你的得分：<span id="final-score">0</span> / 10</div>
+      <p id="feedback-msg" style="font-size: 1.1rem; color: #555;"></p>
+      <button class="start-btn" onclick="closeModalAndRestart()">再玩一次 🔄</button>
+    </div>
+  </div>
+
+  <script>
+    let currentQuestion = 0;
+    let score = 0;
+    let timer = 10;
+    let timerInterval = null;
+    let correctAnswer = 0;
+    let userInputValue = "";
+
+    // Web Audio API 合成音效（無需外部音訊檔案）
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(isCorrect) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (isCorrect) {
+        // 答對音效：高音雙音
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else {
+        // 答錯音效：低沉鋸齒波
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
+
+    function startGame() {
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      nextQuestion();
+    }
+
+    function generateQuestion() {
+      // 產生和不大於 20 的加法題目
+      const sum = Math.floor(Math.random() * 19) + 2; // 2 ~ 20
+      const a = Math.floor(Math.random() * (sum + 1));
+      const b = sum - a;
+
+      // 隨機隱藏：0 -> 被加數(a), 1 -> 加數(b), 2 -> 和(sum)
+      const missingType = Math.floor(Math.random() * 3);
+      
+      let html = "";
+      if (missingType === 0) {
+        correctAnswer = a;
+        html = `<div class="blank-box" id="user-ans">?</div> + <span>${b}</span> = <span>${sum}</span>`;
+      } else if (missingType === 1) {
+        correctAnswer = b;
+        html = `<span>${a}</span> + <div class="blank-box" id="user-ans">?</div> = <span>${sum}</span>`;
+      } else {
+        correctAnswer = sum;
+        html = `<span>${a}</span> + <span>${b}</span> = <div class="blank-box" id="user-ans">?</div>`;
+      }
+
+      document.getElementById('question-display').innerHTML = html;
+      userInputValue = "";
+    }
+
+    function nextQuestion() {
+      if (currentQuestion >= 10) {
+        endGame();
+        return;
+      }
+
+      currentQuestion++;
+      document.getElementById('q-num').innerText = currentQuestion;
+      generateQuestion();
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timer = 10;
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        timer--;
+        updateTimerUI();
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          playSound(false); // 超時視同答錯
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      document.getElementById('timer-text').innerText = timer;
+      const progressPercent = (timer / 10) * 100;
+      document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+    }
+
+    function inputNum(num) {
+      if (userInputValue.length < 2) { // 20以內最多兩位數
+        userInputValue += num.toString();
+        document.getElementById('user-ans').innerText = userInputValue;
+      }
+    }
+
+    function clearInput() {
+      userInputValue = "";
+      document.getElementById('user-ans').innerText = "?";
+    }
+
+    function submitAnswer() {
+      if (userInputValue === "") return;
+      
+      clearInterval(timerInterval);
+      const val = parseInt(userInputValue, 10);
+
+      if (val === correctAnswer) {
+        score++;
+        playSound(true);
+      } else {
+        playSound(false);
+      }
+
+      nextQuestion();
+    }
+
+    function endGame() {
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('final-score').innerText = score;
+      
+      let msg = "";
+      if (score === 10) msg = "🌟 太厲害了！你是加法大師！";
+      else if (score >= 7) msg = "👍 表現很好，繼續保持！";
+      else msg = "💪 別灰心，每天練習一定會進步！";
+      
+      document.getElementById('feedback-msg').innerText = msg;
+      document.getElementById('result-modal').style.display = 'flex';
+    }
+
+    function closeModalAndRestart() {
+      document.getElementById('result-modal').style.display = 'none';
+      startGame();
+    }
+  </script>
+</body>
+</html>
